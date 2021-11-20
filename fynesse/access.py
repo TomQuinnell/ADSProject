@@ -115,3 +115,26 @@ def upload_postcode_data(conn):
     upload_data_from_file(conn, "open_postcode_geo.csv", 'postcode_data')
     print("Data successfully uploaded.")
     print()
+
+
+def join_data_for_region(conn, region):
+    """ Select the data for the region, join into one table, and store the results in prices_coordinates_data """
+    """select a.item,a.description,a.qty_sold,a.date_sold,a.sold _price,
+a.currprice,a.[total sales],a.sale_price,b.price,b.pricedate
+into MyNewTable
+from ccsales_test a
+inner join
+ccsales_pricehist2 b
+on a.item =b.item;"""
+    cur = conn.cursor()
+    cur.execute(f"""
+        INSERT INTO prices_coordinates_data
+        (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
+        town_city, district, county, country, lattitude, longitude, db_id)
+        SELECT price, date_of_transfer, pp.postcode, property_type, new_build_flag, tenure_type, locality,
+        town_city, district, county, country, lattitude, longitude, pp.db_id
+        FROM (SELECT * FROM pp_data WHERE pp_data.district = "{region}") pp
+        INNER JOIN
+        postcode_data pc
+        ON pp.postcode = pc.postcode \n;""")
+    print(head(conn, "prices_coordinates_data"))
