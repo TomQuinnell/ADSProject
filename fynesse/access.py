@@ -75,6 +75,7 @@ def download_file_from_url(url, file_name=None):
             file_name = url.split("/")[:1]
         with open(file_name, 'wb') as f:
             shutil.copyfileobj(response, f)
+    return file_name
 
 
 def get_pp_url_for_year_part(year, part):
