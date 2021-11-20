@@ -72,7 +72,7 @@ def download_file_from_url(url, file_name=None):
         Named as the file_name passed in, or from the url by default """
     with urllib.request.urlopen(url) as response:
         if file_name is None:
-            file_name = url.split("/")[:1]
+            file_name = url.split("/")[-1]
         with open(file_name, 'wb') as f:
             shutil.copyfileobj(response, f)
     return file_name
