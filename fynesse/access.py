@@ -62,8 +62,8 @@ def head(conn, table, n=5):
 
 def upload_data_from_file(conn, filename, table_name):
     cur = conn.cursor()
-    cur.execute(f"""LOCAL DATA LOAD INFILE '{filename}' INTO TABLE `{table_name}`
-                    FIELDS TERMINATED BY ',' 
+    cur.execute(f"""LOAD DATA LOCAL INFILE '{filename}' INTO TABLE `{table_name}`
+                    FIELDS TERMINATED BY ','
                     LINES STARTING BY '' TERMINATED BY '\n';""")
 
 
@@ -98,8 +98,6 @@ def upload_pp_data(conn):
             print()
 
 
-
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
     raise NotImplementedError
-
