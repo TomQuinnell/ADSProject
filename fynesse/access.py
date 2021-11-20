@@ -8,6 +8,7 @@ import sqlite"""
 import urllib.request
 import shutil
 import pymysql
+import zipfile
 
 # This file accesses the data
 
@@ -55,9 +56,9 @@ def select_top(conn, table,  n):
 
 
 def head(conn, table, n=5):
-  rows = select_top(conn, table, n)
-  for r in rows:
-      print(r)
+    rows = select_top(conn, table, n)
+    for r in rows:
+        print(r)
 
 
 def upload_data_from_file(conn, filename, table_name):
@@ -85,6 +86,11 @@ def get_pp_url_for_year_part(year, part):
     return data_url_root + f"pp-{year}-part{part}.csv"
 
 
+def get_postcode_url():
+    """ Return the URL for the Postcode Data """
+    return "https://www.getthedata.com/downloads/open_postcode_geo.csv.zip"
+
+
 def upload_pp_data(conn):
     """ Upload the Price Paid Data to the SQL database """
     for year in range(1995, 2022):
@@ -98,6 +104,14 @@ def upload_pp_data(conn):
             print()
 
 
-def data():
-    """Read the data from the web or local file, returning structured format such as a data frame"""
-    raise NotImplementedError
+def upload_postcode_data(conn):
+    """ Upload the Postcode Data to the SQL database """
+    print(f"Downloading data Postcode data zip file...")
+    filename = download_file_from_url(get_postcode_url())
+    print("Download successful. Now unzipping...")
+    with zipfile.ZipFile(filename, 'r') as zip_file:
+        zip_file.extractall(".")
+    print("Unzipped successfully. Now uploading to sql database...")
+    upload_data_from_file(conn, "open_postcode_geo.csv", 'postcode_data')
+    print("Data successfully uploaded.")
+    print()
