@@ -100,7 +100,7 @@ def upload_pp_data(conn):
             print(f"Downloading data for {year} part {part}...")
             filename = download_file_from_url(get_pp_url_for_year_part(year, part))
             print(f"Download successful. Now uploading to sql database...")
-            upload_data_from_file(conn, filename, 'pp_data')
+            upload_data_from_file(conn, filename, 'pp_data', enclosing_char="\"")
             print(f"Data successfully uploaded for {year} part {part}")
             print()
 
