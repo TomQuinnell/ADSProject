@@ -61,10 +61,10 @@ def head(conn, table, n=5):
         print(r)
 
 
-def upload_data_from_file(conn, filename, table_name):
+def upload_data_from_file(conn, filename, table_name, enclosing_char=''):
     cur = conn.cursor()
     cur.execute(f"""LOAD DATA LOCAL INFILE '{filename}' INTO TABLE `{table_name}`
-                    FIELDS TERMINATED BY ','
+                    FIELDS TERMINATED BY ',' ENCLOSED BY '{enclosing_char}'
                     LINES STARTING BY '' TERMINATED BY '\n';""")
     conn.commit()
 
