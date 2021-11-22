@@ -66,6 +66,7 @@ def upload_data_from_file(conn, filename, table_name):
     cur.execute(f"""LOAD DATA LOCAL INFILE '{filename}' INTO TABLE `{table_name}`
                     FIELDS TERMINATED BY ','
                     LINES STARTING BY '' TERMINATED BY '\n';""")
+    conn.commit()
 
 
 def download_file_from_url(url, file_name=None):
@@ -117,7 +118,7 @@ def upload_postcode_data(conn):
     print()
 
 
-def join_data_for_region(conn, region):
+def join_data_for_region_time(conn, region, time):
     """ Select the data for the region, join into one table, and store the results in prices_coordinates_data """
     """select a.item,a.description,a.qty_sold,a.date_sold,a.sold _price,
 a.currprice,a.[total sales],a.sale_price,b.price,b.pricedate
@@ -127,14 +128,18 @@ inner join
 ccsales_pricehist2 b
 on a.item =b.item;"""
     cur = conn.cursor()
+    print("Truncating table...")
+    cur.execute("TRUNCATE TABLE prices_coordinates_data")  # clear the data, preserve structure
+    print("Table truncated, now inserting data for ", region, time)
     cur.execute(f"""
         INSERT INTO prices_coordinates_data
         (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
         town_city, district, county, country, lattitude, longitude, db_id)
         SELECT price, date_of_transfer, pp.postcode, property_type, new_build_flag, tenure_type, locality,
         town_city, district, county, country, lattitude, longitude, pp.db_id
-        FROM (SELECT * FROM pp_data WHERE pp_data.district = "{region}") pp
+        FROM (SELECT * FROM pp_data WHERE pp_data.district = "{region}" 
+            AND pp_data.date_of_transfer LIKE '{time}%') pp
         INNER JOIN
         postcode_data pc
         ON pp.postcode = pc.postcode \n;""")
-    print(head(conn, "prices_coordinates_data"))
+    conn.commit()
