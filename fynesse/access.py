@@ -118,13 +118,13 @@ def upload_postcode_data(conn):
     print()
 
 
-def join_data_for_region_time(conn, postcode_start, time):
+def join_data_for_region_time(conn, postcode_start, date_of_transfer):
     """ Select the data for the region with postcode starting with postcode_start,
         join into one table, and store the results in prices_coordinates_data """
     cur = conn.cursor()
     print("Truncating table...")
     cur.execute("TRUNCATE TABLE prices_coordinates_data")  # clear the data, preserve structure
-    print("Table truncated, now inserting data for ", postcode_start, time)
+    print("Table truncated, now inserting data for ", postcode_start, date_of_transfer)
     cur.execute(f"""
         INSERT INTO prices_coordinates_data
             (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
@@ -132,7 +132,8 @@ def join_data_for_region_time(conn, postcode_start, time):
         SELECT price, date_of_transfer, pp.postcode, property_type, new_build_flag, tenure_type, locality,
             town_city, district, county, country, lattitude, longitude, pp.db_id
         FROM
-            (SELECT * FROM pp_data WHERE pp_data.postcode LIKE '{postcode_start}%' AND pp_data.date_of_transfer LIKE '{date_of_transfer}%') pp
+            (SELECT * FROM pp_data WHERE pp_data.postcode LIKE '{postcode_start}%'
+                AND pp_data.date_of_transfer LIKE '{date_of_transfer}%') pp
         INNER JOIN
             (SELECT * FROM postcode_data WHERE postcode_data.postcode LIKE '{postcode_start}%') pc
         ON pp.postcode = pc.postcode \n;""")
