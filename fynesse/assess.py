@@ -25,9 +25,12 @@ def get_lat_lon_for(place_name):
     return ox.geocoder.geocode(place_name)
 
 
-def get_tags(points_of_interest):
+def get_tags(points_of_interest, poi_to_tag=None):
     tags = {}
-    poi_to_tag = {"Examples": ["To follow!!!"], "Schools": ["school", "education"], "etc.": ["etc."]}
+    if poi_to_tag is None:
+        poi_to_tag = {"aerialway": True, "amenity": True, "building.": True, "emergency": True,
+                      "healthcare": True, "highway": ["motorway", "primary"], "historic": True,
+                      "leisure": True, "office": True, "public transport": True, "railway": True}
     for poi in points_of_interest:
         tags_for_poi = poi_to_tag[poi]
         for tag in tags_for_poi:
