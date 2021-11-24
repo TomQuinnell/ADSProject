@@ -138,3 +138,10 @@ def join_data_for_region_time(conn, postcode_start, date_of_transfer):
             (SELECT * FROM postcode_data WHERE postcode_data.postcode LIKE '{postcode_start}%') pc
         ON pp.postcode = pc.postcode \n;""")
     conn.commit()
+
+
+def clean_place_name(place_name):
+    return place_name.lower().replace(' ', '-').replace(',', '')
+
+
+
