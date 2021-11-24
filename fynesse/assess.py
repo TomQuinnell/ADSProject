@@ -29,19 +29,6 @@ def get_lat_lon_for(place_name):
     return ox.geocoder.geocode(place_name)
 
 
-def get_tags(points_of_interest, poi_to_tag=None):
-    tags = {}
-    if poi_to_tag is None:
-        poi_to_tag = {"aerialway": True, "amenity": True, "building.": True, "emergency": True,
-                      "healthcare": True, "highway": ["motorway", "primary"], "historic": True,
-                      "leisure": True, "office": True, "public transport": True, "railway": True}
-    for poi in points_of_interest:
-        tags_for_poi = poi_to_tag[poi]
-        for tag in tags_for_poi:
-            tags[tag] = True
-    return tags
-
-
 def get_points_of_interest(north, south, east, west, tags):
     return ox.geometries_from_bbox(north, south, east, west, tags)
 
@@ -81,12 +68,12 @@ def plot_on_map(nodes, edges, area, bbs):
     plt.tight_layout()
 
 
-def visualise_pois_near(place_name, poi_names=default_pois, bb_width=0.02, bb_height=0.02):
+def visualise_pois_near(place_name, poi_tags=default_pois, bb_width=0.02, bb_height=0.02):
     # get gdf data
     nodes, edges, area, bbs = get_gdf_data_for(place_name, bb_width, bb_height)
 
     # get points of interest
-    points_of_interest = get_points_of_interest(*bbs, get_tags(poi_names))
+    points_of_interest = get_points_of_interest(*bbs, poi_tags)
 
     plot_on_map(points_of_interest, edges, area, bbs)
 
