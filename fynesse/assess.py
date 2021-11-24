@@ -12,7 +12,11 @@ import osmnx as ox
 import matplotlib.pyplot as plt
 import mlai.plot as plot
 
-"""Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers encoded? What do columns represent, makes rure they are correctly labeled. How is the data indexed. Crete visualisation routines to assess the data (e.g. in bokeh). Ensure that date formats are correct and correctly timezoned."""
+"""Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers 
+encoded? What do columns represent, makes sure they are correctly labeled. How is the data indexed. Crete visualisation 
+routines to assess the data (e.g. in bokeh). Ensure that date formats are correct and correctly timezoned."""
+default_pois = ("aerialway", "amenity", "building.", "emergency", "healthcare", "highway", "historic", "leisure",
+                "office", "public transport", "railway")
 
 
 def get_bounding_box(lat, lon, width=0.02, height=0.02):
@@ -77,7 +81,7 @@ def plot_on_map(nodes, edges, area, bbs):
     plt.tight_layout()
 
 
-def visualise_pois_near(place_name, poi_names=('Health', 'Schools'), bb_width=0.02, bb_height=0.02):
+def visualise_pois_near(place_name, poi_names=default_pois, bb_width=0.02, bb_height=0.02):
     # get gdf data
     nodes, edges, area, bbs = get_gdf_data_for(place_name, bb_width, bb_height)
 
