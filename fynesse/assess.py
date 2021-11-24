@@ -15,8 +15,9 @@ import mlai.plot as plot
 """Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers 
 encoded? What do columns represent, makes sure they are correctly labeled. How is the data indexed. Crete visualisation 
 routines to assess the data (e.g. in bokeh). Ensure that date formats are correct and correctly timezoned."""
-default_pois = ("aerialway", "amenity", "building.", "emergency", "healthcare", "highway", "historic", "leisure",
-                "office", "public transport", "railway")
+default_pois = {"aerialway": True, "amenity": ["school", "education"], "building": ["religious", "sports"],
+                "emergency": True, "healthcare": True, "highway": ["motorway", "primary"], "historic": True,
+                "leisure": True, "office": True, "public transport": True, "railway": True}
 
 
 def get_bounding_box(lat, lon, width=0.02, height=0.02):
