@@ -9,6 +9,7 @@ import urllib.request
 import shutil
 import pymysql
 import zipfile
+import pandas as pd
 
 # This file accesses the data
 
@@ -50,6 +51,20 @@ def select_top(conn, table,  n):
     """
     cur = conn.cursor()
     cur.execute(f'SELECT * FROM {table} LIMIT {n}')
+
+    rows = cur.fetchall()
+    return rows
+
+
+def select_all(conn, table):
+    """
+    Query n first rows of the table
+    :param conn: the Connection object
+    :param table: The table to query
+    :param n: Number of rows to query
+    """
+    cur = conn.cursor()
+    cur.execute(f'SELECT * FROM {table}')
 
     rows = cur.fetchall()
     return rows
@@ -166,4 +181,14 @@ def clean_place_name(place_name):
     return place_name.lower().replace(' ', '-').replace(',', '')
 
 
+def sql_to_df(conn, table_name):
+    return pd.read_sql(f'SELECT * FROM {table_name}', conn)
 
+
+def get_points_within_bb(df, bb):
+    north, south, east, west = bb
+    return df[(west <= df["lattitude"]) and (df["lattitude"] < east) and (south <= df["longitude"]) and (df["longitude"] < north)]
+
+
+def get_within_bb_for_region(conn, bb):
+    return get_points_within_bb(sql_to_df(conn, "prices_coordinates_data"), bb)
