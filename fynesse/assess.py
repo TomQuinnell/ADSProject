@@ -79,3 +79,10 @@ def visualise_pois_near(place_name, poi_tags=default_pois, bb_width=0.02, bb_hei
     plot_on_map(points_of_interest, edges, area, bbs)
 
     return nodes, edges, area, points_of_interest, bbs
+
+
+def filter_pois(df, column_selector, column_value=True):
+    non_null_df = df[df[column_selector].notnull()]
+    if not column_value:
+        return non_null_df[non_null_df[column_selector] == column_value]
+    return non_null_df
