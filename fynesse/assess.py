@@ -11,6 +11,7 @@ import sklearn.feature_extraction"""
 import osmnx as ox
 import matplotlib.pyplot as plt
 import mlai.plot as plot
+import pandas as pd
 
 """Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers 
 encoded? What do columns represent, makes sure they are correctly labeled. How is the data indexed. Crete visualisation 
@@ -82,7 +83,10 @@ def visualise_pois_near(place_name, poi_tags=default_pois, bb_width=0.02, bb_hei
 
 
 def filter_pois(df, column_selector, column_value=True):
-    non_null_df = df[df[column_selector].notnull()]
-    if not column_value:
-        return non_null_df[non_null_df[column_selector] == column_value]
-    return non_null_df
+    try:
+        non_null_df = df[df[column_selector].notnull()]
+        if not column_value:
+            return non_null_df[non_null_df[column_selector] == column_value]
+        return non_null_df
+    except KeyError:
+        return pd.DataFrame([], columns=df.columns)
