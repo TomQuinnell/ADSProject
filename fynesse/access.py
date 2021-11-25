@@ -187,7 +187,8 @@ def sql_to_df(conn, table_name):
 
 def get_points_within_bb(df, bb):
     north, south, east, west = bb
-    return df[(west <= df["lattitude"]) and (df["lattitude"] < east) and (south <= df["longitude"]) and (df["longitude"] < north)]
+    return df.loc[(west <= df["lattitude"]) & (df["lattitude"] < east) & (south <= df["longitude"]) &
+                  (df["longitude"] < north)]
 
 
 def get_within_bb_for_region(conn, bb):
