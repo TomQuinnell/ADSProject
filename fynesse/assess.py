@@ -92,5 +92,16 @@ def filter_pois(df, column_selector, column_value=True):
         return pd.DataFrame([], columns=df.columns)
 
 
-def plot_house_prices(house, by_type=True):
-    plt.plot()
+def plot_price_hist(df):
+    plt.hist(df['price'], 50, density=True)
+
+
+def plot_house_prices(house_df, by_type=True):
+    if by_type:
+        plot_price_hist(house_df.loc[house_df["property_type"] == "F"])
+        plot_price_hist(house_df.loc[house_df["property_type"] == "S"])
+        plot_price_hist(house_df.loc[house_df["property_type"] == "D"])
+        plot_price_hist(house_df.loc[house_df["property_type"] == "T"])
+        plot_price_hist(house_df.loc[house_df["property_type"] == "O"])
+    else:
+        plot_price_hist(house_df)
