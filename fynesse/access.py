@@ -276,7 +276,8 @@ def get_lat_from_postcode_year(conn, postcode, year):
     """
     join_data_for_postcode_time(conn, postcode, year)
     df = sql_to_df(conn, "prices_coordinates_data")
-    return df['lattitude'].mean(), df['longitude'].mean()
+    lat, lon = df['lattitude'], df['longitude']
+    return lat.mean(), lon.mean(), lat.min(), lat.max(), lon.min(), lon.max()
 
 
 def get_bounding_box(lat, lon, width=0.02, height=0.02):
