@@ -193,3 +193,9 @@ def get_points_within_bb(df, bb):
 
 def get_within_bb_for_region(conn, bb):
     return get_points_within_bb(sql_to_df(conn, "prices_coordinates_data"), bb)
+
+
+def get_lat_from_postcode_year(conn, postcode, year):
+    join_data_for_postcode_time(conn, postcode, year)
+    df = sql_to_df(conn, "prices_coordinates_data")
+    return df['lattitude'].mean(), df['longitude'].mean()

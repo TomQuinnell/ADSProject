@@ -31,11 +31,20 @@ def get_lat_lon_for(place_name):
     return ox.geocoder.geocode(place_name)
 
 
-def get_points_of_interest(north, south, east, west, tags):
+def update_config_timestamp(ts=None):
+    """ Update config to get data from specific time """
+    if ts is None:
+        ox.utils.config(overpass_settings='[out:json][timeout:90][date:"2021-11-25T12:00:00Z"]')
+    else:
+        ox.utils.config(overpass_settings=f'[out:json][timeout:90][date:"{ts}"]')
+
+
+def get_points_of_interest(north, south, east, west, ts, tags):
+    update_config_timestamp(ts)
     return ox.geometries_from_bbox(north, south, east, west, tags)
 
 
-def get_gdf_data_for(place_name, bb_width=0.02, bb_height=0.02):
+def get_gdf_data_for(place_name, ts, bb_width=0.02, bb_height=0.02):
     # Get lat, lon for place_name
     place_name = clean_place_name(place_name)
     lat, lon = get_lat_lon_for(place_name)
@@ -70,12 +79,12 @@ def plot_on_map(nodes, edges, area, bbs):
     plt.tight_layout()
 
 
-def visualise_pois_near(place_name, poi_tags=default_pois, bb_width=0.02, bb_height=0.02):
+def visualise_pois_near(place_name, ts=None, poi_tags=default_pois, bb_width=0.02, bb_height=0.02):
     # get gdf data
     nodes, edges, area, bbs = get_gdf_data_for(place_name, bb_width, bb_height)
 
     # get points of interest
-    points_of_interest = get_points_of_interest(*bbs, poi_tags)
+    points_of_interest = get_points_of_interest(*bbs, ts, poi_tags)
 
     plot_on_map(points_of_interest, edges, area, bbs)
 
@@ -90,3 +99,7 @@ def filter_pois(df, column_selector, column_value=True):
         return non_null_df
     except KeyError:
         return pd.DataFrame([], columns=df.columns)
+
+
+def plot_house_prices(house, by_type=True):
+    plt.plot()
