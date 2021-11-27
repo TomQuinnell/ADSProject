@@ -76,7 +76,6 @@ def visualise_pois_near(place_name, poi_tags=default_pois, bb_width=0.02, bb_hei
 
     # get points of interest
     points_of_interest = get_points_of_interest(*bbs, poi_tags)
-    print(points_of_interest)
 
     plot_on_map(points_of_interest, edges, area, bbs)
 
