@@ -47,7 +47,8 @@ def plot_on_map(nodes, edges, area, bbs):
     ax.set_ylabel("latitude")
 
     # Plot all POIs
-    nodes.plot(ax=ax, color="blue", alpha=0.7, markersize=10)
+    if not nodes.empty:
+        nodes.plot(ax=ax, color="blue", alpha=0.7, markersize=10)
     plt.tight_layout()
 
 
