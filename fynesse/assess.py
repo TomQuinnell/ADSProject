@@ -92,16 +92,20 @@ def filter_pois(df, column_selector, column_value=True):
         return pd.DataFrame([], columns=df.columns)
 
 
-def plot_price_hist(df):
-    plt.hist(df['price'], 50, density=True)
+def plot_price_hist(df, house_type):
+    if house_type != "All":
+        df = df.loc[df['property_type'] == house_type]
+    fig, ax = plt.subplots()
+    ax.set_title("Price histogram for " + house_type)
+    ax.hist(df['price'], 50, density=True)
 
 
 def plot_house_prices(house_df, by_type=True):
     if by_type:
-        plot_price_hist(house_df.loc[house_df["property_type"] == "F"])
-        plot_price_hist(house_df.loc[house_df["property_type"] == "S"])
-        plot_price_hist(house_df.loc[house_df["property_type"] == "D"])
-        plot_price_hist(house_df.loc[house_df["property_type"] == "T"])
-        plot_price_hist(house_df.loc[house_df["property_type"] == "O"])
+        plot_price_hist(house_df, "F")
+        plot_price_hist(house_df, "S")
+        plot_price_hist(house_df, "D")
+        plot_price_hist(house_df, "T")
+        plot_price_hist(house_df, "O")
     else:
-        plot_price_hist(house_df)
+        plot_price_hist(house_df, "All")
