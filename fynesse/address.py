@@ -16,9 +16,11 @@ import scipy.stats"""
 import numpy as np
 import statsmodels.api as sm
 from fynesse import assess
+from shapely.geometry import Point
 
 """Address a particular question that arises from the data"""
 property_types = ["F", "S", "D", "T", "O"]
+
 
 def type_onehot(df, property_type):
     return np.where(df['property_type'] == property_type, 1, 0.0001).reshape(-1, 1)
@@ -64,6 +66,7 @@ def nearest_price_feature(houses, lats, lons):
     feature = []
     for i in range(len(lats)):
         min_dist = 1000000
+        price = 0
         lat = lats[i]
         lon = lons[i]
         for row in houses.itertuples():
@@ -72,7 +75,8 @@ def nearest_price_feature(houses, lats, lons):
             dist_to_house = Point(lat, lon).dist(Point(house_lat, house_lon))
             if dist_to_house < min_dist:
                 min_dist = dist_to_house
-        feature.append(min_dist)
+                price = row['price']
+        feature.append(price)
     return np.array(feature)
 
 
