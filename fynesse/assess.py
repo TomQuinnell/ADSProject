@@ -130,30 +130,30 @@ def closest_point(point, points):
 
 
 def get_poi_names(tags):
-  poi_names = []
-  for k in tags.keys():
-    if tags[k] == True:
-      poi_names.append(k)
-    else:
-      for v in tags[k]:
-        poi_names.append(k + ";" + v)
-  return poi_names
+    poi_names = []
+    for k in tags.keys():
+        if tags[k] == True:
+            poi_names.append(k)
+        else:
+            for v in tags[k]:
+                poi_names.append(k + ";" + v)
+    return poi_names
 
 
 def get_features_for_houses(houses, bbs):
     # get features for each house, storing in lookup table of bboxes
-    poi_names = assess.get_poi_names(assess.default_pois)
+    poi_names = get_poi_names(default_pois)
     feature_bb_size = 0.0002
     poi_lookup = {}
     feature_data = [[] for _ in range(len(poi_names))]
     for row in houses.itertuples():
         house_pos = (row.lattitude, row.longitude)
-        closest_house, dist_closest = assess.closest_point(house_pos, list(poi_lookup.keys()))
+        closest_house, dist_closest = closest_point(house_pos, list(poi_lookup.keys()))
         if dist_closest < feature_bb_size:
             row_features = poi_lookup[(closest_house[0], closest_house[1])]
         else:
-            region_pois = assess.get_points_of_interest(*bbs, assess.default_pois)
-            row_features = [len(assess.filter_pois(region_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
+            region_pois = get_points_of_interest(*bbs, default_pois)
+            row_features = [len(filter_pois(region_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
                             for poi_name in poi_names]
             poi_lookup[(house_pos[0], house_pos[1])] = row_features
 
