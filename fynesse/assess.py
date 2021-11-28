@@ -152,7 +152,7 @@ def get_features_for_houses(houses):
         if dist_closest < feature_bb_size:
             row_features = poi_lookup[(closest_house[0], closest_house[1])]
         else:
-            region_pois = get_points_of_interest(get_bounding_box(row.lattitude, row.longitude, width=feature_bb_size,
+            region_pois = get_points_of_interest(*get_bounding_box(row.lattitude, row.longitude, width=feature_bb_size,
                                                                   height=feature_bb_size), default_pois)
             row_features = [len(filter_pois(region_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
                             for poi_name in poi_names]
