@@ -70,12 +70,12 @@ def nearest_price_feature(houses, lats, lons):
         lat = lats[i]
         lon = lons[i]
         for row in houses.itertuples():
-            house_lat = row['lattitude']
-            house_lon = row['longitude']
+            house_lat = row.lattitude
+            house_lon = row.longitude
             dist_to_house = Point(lat, lon).dist(Point(house_lat, house_lon))
             if dist_to_house < min_dist:
                 min_dist = dist_to_house
-                price = row['price']
+                price = row.price
         feature.append(price)
     return np.array(feature)
 
