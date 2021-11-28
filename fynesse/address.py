@@ -20,10 +20,13 @@ from shapely.geometry import Point
 
 """Address a particular question that arises from the data"""
 property_types = ["F", "S", "D", "T", "O"]
+price_scale = 1000
+onehot_true = 1
+onehot_false = 0.0001
 
 
 def type_onehot(df, property_type):
-    return np.where(df['property_type'] == property_type, 1, 0.0001).reshape(-1, 1)
+    return np.where(df['property_type'] == property_type, onehot_true, onehot_false).reshape(-1, 1)
 
 
 def append_type_onehots_from_df(features, df):
@@ -39,10 +42,11 @@ def design_matrix(houses, poi_names, added_features=False):
     vectors = [np.array(houses[poi_name]).reshape(-1, 1) + np.random.random() / 1000 for poi_name in poi_names]
     vectors.append(np.array(houses['lattitude']).reshape(-1, 1))
     vectors.append(np.array(houses['longitude']).reshape(-1, 1))
-    append_type_onehots_from_df(vectors, houses)
+    if not added_features:
+        append_type_onehots_from_df(vectors, houses)
     if added_features:
-        vectors.append(nearest_price_feature(houses, list(houses['lattitude']), list(houses['longitude'])))
-
+        print("adding features...")
+        vectors.append(nearest_price_feature(houses, list(houses['lattitude']), list(houses['longitude'])).reshape(-1, 1))
     return np.concatenate(vectors, axis=1)
 
 
@@ -51,18 +55,19 @@ def append_type_onehots(features, n, chosen_property_types=None):
         chosen_property_types = np.random.choice(property_types, size=n)
     chosen_property_types = np.array(chosen_property_types)
     for property_type in property_types:
-        features.append(np.where(chosen_property_types == property_type, 1, 0.0001).reshape(-1, 1))
+        features.append(np.where(chosen_property_types == property_type, onehot_true, onehot_false).reshape(-1, 1))
 
 
 def sample_normals(houses, poi_names, n):
     samples = []
     for poi_name in poi_names:
         poi_col = houses[poi_name]
-        samples.append(np.random.normal(poi_col.mean(), poi_col.std(), size=n).reshape(-1, 1) + 0.0001)
+        sampled = np.random.normal(poi_col.mean(), poi_col.std(), size=n)
+        samples.append(np.where(sampled < 0, 0, sampled).reshape(-1, 1) + 0.0001)
     return samples
 
 
-def nearest_price_feature(houses, lats, lons):
+def nearest_price_feature(houses, lats, lons, add_noise=True):
     feature = []
     for i in range(len(lats)):
         min_dist = 1000000
@@ -76,23 +81,27 @@ def nearest_price_feature(houses, lats, lons):
             if dist_to_house < min_dist:
                 min_dist = dist_to_house
                 price = row.price
-        feature.append(price)
-    return np.array(feature)
+        if add_noise:
+            price -= np.random.random() * 100
+        feature.append(price / price_scale)
+    return np.array([feature])
 
 
 def get_features(lats, lons, property_type_list, houses, poi_names, n=1, added_features=False):
     features = sample_normals(houses, poi_names, n)
     features.append(np.array(lats).reshape(-1, 1))
     features.append(np.array(lons).reshape(-1, 1))
-    append_type_onehots(features, n, property_type_list)
+    if not added_features:
+        append_type_onehots(features, n, property_type_list)
     if added_features:
         features.append(np.array(nearest_price_feature(houses, lats, lons)).reshape(-1, 1))
+    print(features)
     return np.concatenate(features, axis=1)
 
 
 def train_linear_model(houses, poi_names, added_features=False):
     x = design_matrix(houses, poi_names, added_features=added_features)
-    y = np.array(houses['price']) / 1000
+    y = np.array(houses['price']) / price_scale
 
     m_linear = sm.OLS(y, x)
     m_linear_fitted = m_linear.fit()
@@ -101,7 +110,7 @@ def train_linear_model(houses, poi_names, added_features=False):
 
 def train_positive_linear_model(houses, poi_names, added_features=False):
     x = design_matrix(houses, poi_names, added_features=added_features)
-    y = np.array(houses['price']) / 1000
+    y = np.array(houses['price']) / price_scale
 
     m_pos_linear = sm.GLM(y, x, family=sm.families.Poisson(link=sm.families.links.log()))
     m_pos_linear_fitted = m_pos_linear.fit()
