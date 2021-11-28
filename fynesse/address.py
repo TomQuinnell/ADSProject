@@ -83,7 +83,9 @@ def nearest_price_feature(houses, lats, lons, add_noise=True):
                 price = row.price
         if add_noise:
             price -= np.random.random() * 100
-        feature.append(price / price_scale)
+        # stop overflow for exp
+        price = max(price, 0)
+        feature.append(np.log(price))
     return np.array([feature])
 
 
