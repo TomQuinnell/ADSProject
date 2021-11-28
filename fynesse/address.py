@@ -42,31 +42,33 @@ def design_matrix(houses, poi_names):
     return np.concatenate(vectors, axis=1)
 
 
-def append_type_onehots(features, n):
-    chosen_propety_types = np.random.choice(property_types, size=n)
-    for propety_type in property_types:
-        features.append(np.where(chosen_propety_types == propety_type, 1, 0.0001).reshape(-1, 1))
+def append_type_onehots(features, n, chosen_property_types=None):
+    if chosen_property_types is None:
+        chosen_property_types = np.random.choice(property_types, size=n)
+    chosen_property_types = np.array(chosen_property_types)
+    for property_type in property_types:
+        features.append(np.where(chosen_property_types == property_type, 1, 0.0001).reshape(-1, 1))
 
 
 def sample_normals(houses, poi_names, n):
     samples = []
     for poi_name in poi_names:
         poi_col = houses[poi_name]
-        samples.append(np.random.normal(poi_col.mean(), poi_col.std(), size=n).reshape(-1, 1))
+        samples.append(np.random.normal(poi_col.mean(), poi_col.std(), size=n).reshape(-1, 1) + 0.0001)
     return samples
 
 
-def get_features(lats, lons, houses, poi_names, n=1):
+def get_features(lats, lons, property_type_list, houses, poi_names, n=1):
     features = sample_normals(houses, poi_names, n)
     features.append(np.array(lats).reshape(-1, 1))
     features.append(np.array(lons).reshape(-1, 1))
-    append_type_onehots(features, n)
+    append_type_onehots(features, n, property_type_list)
     return np.concatenate(features, axis=1)
 
 
 def train_linear_model(houses, poi_names):
     x = design_matrix(houses, poi_names)
-    y = np.array(houses['price'] / 1000)
+    y = np.array(houses['price']) / 1000
 
     m_linear = sm.OLS(y, x)
     m_linear_fitted = m_linear.fit()
@@ -75,20 +77,20 @@ def train_linear_model(houses, poi_names):
 
 def train_positive_linear_model(houses, poi_names):
     x = design_matrix(houses, poi_names)
-    y = np.array(houses['price'] / 1000)
+    y = np.array(houses['price']) / 1000
 
-    m_pos_linear = sm.GLM(y, x, family=sm.families.Gaussian(link=sm.families.links.log))
+    m_pos_linear = sm.GLM(y, x, family=sm.families.Poisson(link=sm.families.links.Log()))
     m_pos_linear_fitted = m_pos_linear.fit()
     return m_pos_linear_fitted
 
 
-def predict_many(lats, lons, houses, poi_names, model):
-    features = get_features(lats, lons, houses, poi_names, n=len(lats))
+def predict_many(lats, lons, property_type_list, houses, poi_names, model):
+    features = get_features(lats, lons, property_type_list, houses, poi_names, n=len(lats))
     return model.get_prediction(features)
 
 
-def predict_once(lat, lon, houses, poi_names, model):
-    return predict_many([lat], [lon], houses, poi_names, model)
+def predict_once(lat, lon, property_type, houses, poi_names, model):
+    return predict_many([lat], [lon], [property_type], houses, poi_names, model)
 
 
 def summarise_model_pred(model, pred, poi_names=assess.get_poi_names(assess.default_pois)):
