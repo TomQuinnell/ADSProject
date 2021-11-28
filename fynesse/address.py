@@ -33,11 +33,13 @@ def get_param_names(poi_names):
     return [*poi_names, "lattitude", "longitude", *["OnehotType" + property_type for property_type in property_types]]
 
 
-def design_matrix(houses, poi_names):
+def design_matrix(houses, poi_names, added_features=False):
     vectors = [np.array(houses[poi_name]).reshape(-1, 1) + np.random.random() / 1000 for poi_name in poi_names]
     vectors.append(np.array(houses['lattitude']).reshape(-1, 1))
     vectors.append(np.array(houses['longitude']).reshape(-1, 1))
     append_type_onehots_from_df(vectors, houses)
+    if added_features:
+        vectors.append(nearest_price_feature(houses, list(houses['lattitude']), list(houses['longitude'])))
 
     return np.concatenate(vectors, axis=1)
 
@@ -58,16 +60,34 @@ def sample_normals(houses, poi_names, n):
     return samples
 
 
-def get_features(lats, lons, property_type_list, houses, poi_names, n=1):
+def nearest_price_feature(houses, lats, lons):
+    feature = []
+    for i in range(len(lats)):
+        min_dist = 1000000
+        lat = lats[i]
+        lon = lons[i]
+        for row in houses.itertuples():
+            house_lat = row['lattitude']
+            house_lon = row['longitude']
+            dist_to_house = Point(lat, lon).dist(Point(house_lat, house_lon))
+            if dist_to_house < min_dist:
+                min_dist = dist_to_house
+        feature.append(min_dist)
+    return np.array(feature)
+
+
+def get_features(lats, lons, property_type_list, houses, poi_names, n=1, added_features=False):
     features = sample_normals(houses, poi_names, n)
     features.append(np.array(lats).reshape(-1, 1))
     features.append(np.array(lons).reshape(-1, 1))
     append_type_onehots(features, n, property_type_list)
+    if added_features:
+        features.append(np.array(nearest_price_feature(houses, lats, lons)).reshape(-1, 1))
     return np.concatenate(features, axis=1)
 
 
-def train_linear_model(houses, poi_names):
-    x = design_matrix(houses, poi_names)
+def train_linear_model(houses, poi_names, added_features=False):
+    x = design_matrix(houses, poi_names, added_features=added_features)
     y = np.array(houses['price']) / 1000
 
     m_linear = sm.OLS(y, x)
@@ -75,8 +95,8 @@ def train_linear_model(houses, poi_names):
     return m_linear_fitted
 
 
-def train_positive_linear_model(houses, poi_names):
-    x = design_matrix(houses, poi_names)
+def train_positive_linear_model(houses, poi_names, added_features=False):
+    x = design_matrix(houses, poi_names, added_features=added_features)
     y = np.array(houses['price']) / 1000
 
     m_pos_linear = sm.GLM(y, x, family=sm.families.Poisson(link=sm.families.links.log()))
@@ -84,13 +104,13 @@ def train_positive_linear_model(houses, poi_names):
     return m_pos_linear_fitted
 
 
-def predict_many(lats, lons, property_type_list, houses, poi_names, model):
-    features = get_features(lats, lons, property_type_list, houses, poi_names, n=len(lats))
+def predict_many(lats, lons, property_type_list, houses, poi_names, model, added_features):
+    features = get_features(lats, lons, property_type_list, houses, poi_names, n=len(lats), added_features=added_features)
     return model.get_prediction(features)
 
 
-def predict_once(lat, lon, property_type, houses, poi_names, model):
-    return predict_many([lat], [lon], [property_type], houses, poi_names, model)
+def predict_once(lat, lon, property_type, houses, poi_names, model, added_features=False):
+    return predict_many([lat], [lon], [property_type], houses, poi_names, model, added_features)
 
 
 def summarise_model_pred(model, pred, poi_names=assess.get_poi_names(assess.default_pois)):
