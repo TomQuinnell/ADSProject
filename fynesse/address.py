@@ -73,6 +73,15 @@ def train_linear_model(houses, poi_names):
     return m_linear_fitted
 
 
+def train_positive_linear_model(houses, poi_names):
+    x = design_matrix(houses, poi_names)
+    y = np.array(houses['price'] / 1000)
+
+    m_pos_linear = sm.GLM(y, x, family=sm.families.Gaussian(link=sm.families.links.log))
+    m_pos_linear_fitted = m_pos_linear.fit()
+    return m_pos_linear_fitted
+
+
 def predict_many(lats, lons, houses, poi_names, model):
     features = get_features(lats, lons, houses, poi_names, n=len(lats))
     return model.get_prediction(features)
