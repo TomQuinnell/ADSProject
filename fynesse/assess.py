@@ -140,7 +140,7 @@ def get_poi_names(tags):
     return poi_names
 
 
-def get_features_for_houses(houses, bbs):
+def get_features_for_houses(houses):
     # get features for each house, storing in lookup table of bboxes
     poi_names = get_poi_names(default_pois)
     feature_bb_size = 0.0002
@@ -152,7 +152,8 @@ def get_features_for_houses(houses, bbs):
         if dist_closest < feature_bb_size:
             row_features = poi_lookup[(closest_house[0], closest_house[1])]
         else:
-            region_pois = get_points_of_interest(*bbs, default_pois)
+            region_pois = get_points_of_interest(get_bounding_box(row.lattitude, row.longitude, width=feature_bb_size,
+                                                                  height=feature_bb_size), default_pois)
             row_features = [len(filter_pois(region_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
                             for poi_name in poi_names]
             poi_lookup[(house_pos[0], house_pos[1])] = row_features
