@@ -12,6 +12,7 @@ import osmnx as ox
 import matplotlib.pyplot as plt
 import mlai.plot as plot
 import pandas as pd
+from shapely.geometry import Point
 
 """Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers 
 encoded? What do columns represent, makes sure they are correctly labeled. How is the data indexed. Crete visualisation 
@@ -122,7 +123,7 @@ def closest_point(point, points):
     min_dist = 100000000
     closest = None
     for p in points:
-        dist = dist_points(point, p)
+        dist = point.distance(Point(points))
         if dist < min_dist:
             min_dist = dist
             closest = p
@@ -140,27 +141,30 @@ def get_poi_names(tags):
     return poi_names
 
 
-def get_features_for_houses(houses):
+def get_points_of_interest_wthin_dist(pois, radius, point):
+    pois['dist_to_point'] = list(map(lambda pt: point.distance(pt), list(pois['geometry'])))
+    return pois.loc[pois['dist_to_point'] < radius]
+
+
+def get_features_for_houses(houses, bbox, feature_radius=0.01):
     # get features for each house, storing in lookup table of bboxes
     poi_names = get_poi_names(default_pois)
-    feature_bb_size = 0.0002
     poi_lookup = {}
     feature_data = [[] for _ in range(len(poi_names))]
+    region_pois = get_points_of_interest(*bbox, default_pois)
     for row in houses.itertuples():
-        house_pos = (row.lattitude, row.longitude)
-        closest_house, dist_closest = closest_point(house_pos, list(poi_lookup.keys()))
-        if dist_closest < feature_bb_size:
-            row_features = poi_lookup[(closest_house[0], closest_house[1])]
+        house_pos = (row.longitude, row.lattitude)
+        closest_house, dist_closest = closest_point(Point(*house_pos), list(poi_lookup.keys()))
+        if dist_closest < feature_radius:
+            row_features = poi_lookup[closest_house]
         else:
-            region_pois = get_points_of_interest(*get_bounding_box(row.lattitude, row.longitude, width=feature_bb_size,
-                                                                  height=feature_bb_size), default_pois)
-            row_features = [len(filter_pois(region_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
+            house_pois = get_points_of_interest_wthin_dist(region_pois, feature_radius, Point(*house_pos))
+            row_features = [len(filter_pois(house_pois, poi_name.split(";")[0], poi_name.split(";")[-1]))
                             for poi_name in poi_names]
-            poi_lookup[(house_pos[0], house_pos[1])] = row_features
+            poi_lookup[house_pos] = row_features
 
         for i, feature_col in enumerate(feature_data):
             feature_col.append(row_features[i])
 
     for i, feature_name in enumerate(poi_names):
         houses[feature_name] = feature_data[i]
-    print(houses.head())

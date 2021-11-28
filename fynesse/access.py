@@ -335,7 +335,3 @@ def get_gdf_data_for(place_name, bb_width=0.02, bb_height=0.02):
     nodes, edges = ox.graph_to_gdfs(graph)
     area = ox.geocode_to_gdf(place_name)
     return nodes, edges, area, [north, south, east, west]
-
-
-def dist_points(p1, p2):
-    return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
