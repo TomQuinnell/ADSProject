@@ -79,7 +79,7 @@ def train_positive_linear_model(houses, poi_names):
     x = design_matrix(houses, poi_names)
     y = np.array(houses['price']) / 1000
 
-    m_pos_linear = sm.GLM(y, x, family=sm.families.Poisson(link=sm.families.links.Log()))
+    m_pos_linear = sm.GLM(y, x, family=sm.families.Poisson(link=sm.families.links.log()))
     m_pos_linear_fitted = m_pos_linear.fit()
     return m_pos_linear_fitted
 
