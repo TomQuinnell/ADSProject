@@ -188,8 +188,9 @@ def predict_price(latitude, longitude, date, property_type, conn):
     houses = access.sql_to_df(conn, "prices_coordinates_data")
 
     # If no postcode data found, print a warning and randomly guess
-    print("No postcodes found within bounding box. Returning a random guess")
-    return np.random.random() * 400000 + 100000
+    if houses.shape[0] == 0:
+        print("No postcodes found within bounding box. Returning a random guess")
+        return np.random.random() * 400000 + 100000
 
     # Add POIs
     assess.get_features_for_houses(houses, region_bbox)
