@@ -35,14 +35,19 @@ def append_type_onehots_from_df(features, df):
         features.append(type_onehot(df, property_type))
 
 
-def get_param_names(poi_names):
-    return [*poi_names, "lattitude", "longitude", *["OnehotType" + property_type for property_type in property_types]]
+def get_param_names(poi_names, added_features=False):
+    param_names = [*poi_names, "lattitude", "longitude", *["OnehotType" + property_type for property_type in property_types]]
+    if added_features:
+        param_names.append("Nearest")
+    return param_names
 
 
 def design_matrix(houses, poi_names, added_features=False):
     vectors = [np.array(houses[poi_name]).reshape(-1, 1) + np.random.random() / 1000 for poi_name in poi_names]
     vectors.append(np.array(houses['lattitude']).reshape(-1, 1))
     vectors.append(np.array(houses['longitude']).reshape(-1, 1))
+    vectors.append(np.array([date[:4] for date in list(houses['date_of_transfer'])))
+    print(vectors)
     append_type_onehots_from_df(vectors, houses)
     if added_features:
         print("adding features...")
@@ -101,13 +106,14 @@ def get_pois_many(lats, lons, poi_tags, bbox_size):
     return [np.array([feature]).reshape(-1, 1) for feature in features]
 
 
-def get_features(lats, lons, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=1, added_features=False):
+def get_features(lats, lons, dates, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=1, added_features=False):
     if sample_norm_pois:
         features = sample_normals(houses, assess.get_poi_names(poi_tags), n)
     else:
         features = get_pois_many(lats, lons, poi_tags, bbox_size)
     features.append(np.array(lats).reshape(-1, 1))
     features.append(np.array(lons).reshape(-1, 1))
+    features.append(np.array(dates).reshape(-1, 1))
     append_type_onehots(features, n, property_type_list)
     if added_features:
         features.append(np.array(nearest_price_feature(houses, lats, lons)).reshape(-1, 1))
@@ -132,13 +138,13 @@ def train_positive_linear_model(houses, poi_names, added_features=False):
     return m_pos_linear_fitted
 
 
-def predict_many(lats, lons, property_type_list, houses, poi_tags, model, sample_norm_pois, bbox_size, added_features):
-    features = get_features(lats, lons, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=len(lats), added_features=added_features)
+def predict_many(lats, lons, dates, property_type_list, houses, poi_tags, model, sample_norm_pois, bbox_size, added_features):
+    features = get_features(lats, lons, dates, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=len(lats), added_features=added_features)
     return model.get_prediction(features)
 
 
-def predict_once(lat, lon, property_type, houses, poi_tags, model, sample_norm_pois=True, bbox_size=0.02, added_features=False):
-    return predict_many([lat], [lon], [property_type], houses, poi_tags, model, sample_norm_pois, bbox_size, added_features)
+def predict_once(lat, lon, date, property_type, houses, poi_tags, model, sample_norm_pois=True, bbox_size=0.02, added_features=False):
+    return predict_many([lat], [lon], [date], [property_type], houses, poi_tags, model, sample_norm_pois, bbox_size, added_features)
 
 
 def summarise_model_pred(model, pred, poi_names=assess.get_poi_names(assess.default_pois)):

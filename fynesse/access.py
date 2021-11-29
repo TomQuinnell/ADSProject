@@ -170,7 +170,17 @@ def upload_postcode_data(conn):
     print()
 
 
-def join_data_for_postcode_time(conn, postcode_start, date_of_transfer):
+def truncate_table(conn, table, commit=False):
+    cur = conn.cursor()
+    print("Truncating table (clear data while preserving structure)...")
+    cur.execute(f"TRUNCATE TABLE {table}")  # clear the data, preserve structure
+    print("Table truncated")
+
+    if commit:
+        conn.commit()
+
+
+def join_data_for_postcode_time(conn, postcode_start, date_of_transfer, truncate=True):
     """
     Select the data for the region with postcode starting with postcode_start,
     join into one table, and store the results in prices_coordinates_data
@@ -179,9 +189,9 @@ def join_data_for_postcode_time(conn, postcode_start, date_of_transfer):
     :param date_of_transfer: the Prefix for the date of transfer
     """
     cur = conn.cursor()
-    print("Truncating table...")
-    cur.execute("TRUNCATE TABLE prices_coordinates_data")  # clear the data, preserve structure
-    print("Table truncated, now inserting data for ", postcode_start, date_of_transfer)
+    if truncate:
+        truncate_table(conn, "prices_coordinates_data", commit=True)
+    print("Now inserting data for", postcode_start, date_of_transfer)
     cur.execute(f"""
         INSERT INTO prices_coordinates_data
             (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
@@ -197,7 +207,22 @@ def join_data_for_postcode_time(conn, postcode_start, date_of_transfer):
     conn.commit()
 
 
-def join_data_for_region_time(conn, region, date_of_transfer):
+def join_date_for_postcodes_time(conn, postcodes, date):
+    for postcode in postcodes:
+        print("Inserting data for postcode", postcode)
+        join_data_for_postcode_time(conn, postcode, date, truncate=False)
+
+
+def join_data_for_postcodes_times(conn, postcodes, dates):
+    truncate_table(conn, "prices_coordinates_data", commit=True)
+    for date in dates:
+        print("Inserting data for date", date)
+        join_date_for_postcodes_time(conn, postcodes, date)
+
+    conn.commit()
+
+
+def join_data_for_region_time(conn, region, date_of_transfer, truncate=True):
     """
     Select the data for the region with postcode starting with postcode_start,
     join into one table, and store the results in prices_coordinates_data
@@ -206,9 +231,8 @@ def join_data_for_region_time(conn, region, date_of_transfer):
     :param date_of_transfer: the Prefix for the date of transfer
     """
     cur = conn.cursor()
-    print("Truncating table...")
-    cur.execute("TRUNCATE TABLE prices_coordinates_data")  # clear the data, preserve structure
-    print("Table truncated, now inserting data for ", region, date_of_transfer)
+    if truncate:
+        truncate_table(conn, "prices_coordinates_data", commit=True)
     cur.execute(f"""
         INSERT INTO prices_coordinates_data
             (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
@@ -335,3 +359,31 @@ def get_gdf_data_for(place_name, bb_width=0.02, bb_height=0.02):
     nodes, edges = ox.graph_to_gdfs(graph)
     area = ox.geocode_to_gdf(place_name)
     return nodes, edges, area, [north, south, east, west]
+
+
+def select_postcodes_within_bbox(conn, north, south, east, west, limit=6):
+    print("Getting postcodes within the bounding box", [north, south, east, west])
+    cur = conn.cursor()
+    cur.execute(f"""SELECT DISTINCT postcode_district FROM postcode_data
+                    WHERE {west} <= longitude and longitude < {east}
+                        and {south} <= lattitude and lattitude < {north}""")
+
+    rows = cur.fetchall()
+
+    # clean up into list of postcodes - returns data in form (('CB1',),('CB2',),...)
+    return [postcode_tuple[0] for postcode_tuple in rows][:limit]  # could remove furthest postcodes instead
+
+
+def get_date_range(date, n=1):
+    # Get date range, +- n years if still in range
+    date = int(date)
+    date_range = [date]
+    date_range_size = n
+    for date_below in [date - (i + 1) for i in range(date_range_size)]:
+        if date_below >= 1995:
+          date_range.append(date_below)
+    for date_above in [date + (i + 1) for i in range(date_range_size)]:
+        if date_above <= 2021:
+          date_range.append(date_above)
+        date_range.sort()
+    return date_range
