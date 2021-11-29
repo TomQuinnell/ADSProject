@@ -167,7 +167,35 @@ def validate_date(date):
 
 def validate_property_type(property_type):
     if property_type not in property_types:
-        raise Exception("property type not valid. Should be an element in", address.property_types)
+        raise Exception("property type not valid. Should be an element in", property_types)
+
+
+def warn_bad_prediction(pred, trained_model, houses):
+    """
+    Ideas:
+        High std
+        Differ from data range
+        Few data samples
+        Low probabliity of params?
+    """
+    prices = np.array(houses['price'])
+    n = len(prices)
+    pred_val = list(pred['mean'])[0] * price_scale
+
+    if n < 30:
+        print("WARNING. Prediction may be inaccurate. Low number of training samples:", n)
+
+    mean, std = prices.mean(), prices.std()
+    min_val, max_val = prices.min(), prices.max()
+    mean_ci_lower, mean_ci_higher = list(pred['mean_ci_lower'])[0], list(pred['mean_ci_upper'])[0]
+    if pred_val >= mean + 2 * std or pred_val <= mean - 2 * std:
+        print("WARNING. Prediction may be inaccurate. Prediction lies outside 2 std of mean of prices in region.")
+    elif pred_val <= min_val or pred_val >= max_val:
+        print("WARNING. Prediction may be inaccurate. Prediction lies outside of prices in region.")
+    elif mean_ci_lower <= mean - 2 * std or mean_ci_higher >= mean + 2 * std:
+        print("WARNING. Prediction may be inaccurate. Prediction CI lies outside 2 std of mean of prices in region")
+    elif mean_ci_lower <= min_val or mean_ci_higher >= max_val:
+        print("WARNING. Prediction may be inaccurate. Prediction CI lies outside of prices in region.")
 
 
 def predict_price(latitude, longitude, date, property_type, conn):
@@ -203,13 +231,11 @@ def predict_price(latitude, longitude, date, property_type, conn):
 
     # Get prediction
     pred = predict_once(latitude, longitude, date, property_type, houses, assess.default_pois, trained_model,
-                                added_features=added_features, sample_norm_pois=False).summary_frame(alpha=0.05)
+                        added_features=added_features, sample_norm_pois=False).summary_frame(alpha=0.05)
     summarise_model_pred(trained_model, pred)
 
-    # Quality verification - warning
+    # Warm if low quality prediction
+    warn_bad_prediction(pred, trained_model, houses)
 
-    # close SQL connection
-    conn.close()
-
-    # Return prediction - demux mean from pred object
+    # Return prediction - demux mean from prediction object
     return list(pred['mean'])[0] * price_scale
