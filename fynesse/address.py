@@ -46,7 +46,7 @@ def design_matrix(houses, poi_names, added_features=False):
     vectors = [np.array(houses[poi_name]).reshape(-1, 1) + np.random.random() / 1000 for poi_name in poi_names]
     vectors.append(np.array(houses['lattitude']).reshape(-1, 1))
     vectors.append(np.array(houses['longitude']).reshape(-1, 1))
-    vectors.append(np.array([date[:4] for date in list(houses['date_of_transfer'])]))
+    vectors.append(np.array([date.year for date in list(houses['date_of_transfer'])]))
     print(vectors)
     append_type_onehots_from_df(vectors, houses)
     if added_features:
