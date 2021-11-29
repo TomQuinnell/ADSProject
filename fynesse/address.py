@@ -97,7 +97,6 @@ def get_pois_many(lats, lons, poi_tags, bbox_size):
         lon = lons[i]
         pois = access.get_points_of_interest(*access.get_bounding_box(lat, lon, bbox_size, bbox_size), poi_tags)
         for j, poi_name in enumerate(poi_names):
-            print(poi_names, len(assess.filter_pois(pois, poi_name.split(";")[0], poi_name.split(";")[-1])))
             features[j].append(len(assess.filter_pois(pois, poi_name.split(";")[0], poi_name.split(";")[-1])))
     return [np.array([feature]).reshape(-1, 1) for feature in features]
 
@@ -112,7 +111,6 @@ def get_features(lats, lons, property_type_list, houses, poi_tags, bbox_size, n=
     append_type_onehots(features, n, property_type_list)
     if added_features:
         features.append(np.array(nearest_price_feature(houses, lats, lons)).reshape(-1, 1))
-    print(features)
     return np.concatenate(features, axis=1)
 
 
