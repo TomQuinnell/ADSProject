@@ -186,8 +186,8 @@ def warn_bad_prediction(pred, trained_model, houses):
         print("WARNING. Prediction may be inaccurate. Low number of training samples:", n)
 
     mean, std = prices.mean(), prices.std()
-    min_val, max_val = prices.min(), prices.max()
-    mean_ci_lower, mean_ci_higher = list(pred['mean_ci_lower'])[0], list(pred['mean_ci_upper'])[0]
+    min_val, max_val = prices.min() * price_scale, prices.max() * price_scale
+    mean_ci_lower, mean_ci_higher = list(pred['mean_ci_lower'])[0] * price_scale, list(pred['mean_ci_upper'])[0] * price_scale
     if pred_val >= mean + 2 * std or pred_val <= mean - 2 * std:
         print("WARNING. Prediction may be inaccurate. Prediction lies outside 2 std of mean of prices in region.")
     elif pred_val <= min_val or pred_val >= max_val:
@@ -217,7 +217,7 @@ def predict_price(latitude, longitude, date, property_type, conn):
 
     # If no postcode data found, print a warning and randomly guess
     if houses.shape[0] == 0:
-        print("No postcodes found within bounding box. Returning a random guess")
+        print("No samples found within bounding box. Returning a random guess")
         return np.random.random() * 400000 + 100000
 
     # Add POIs
