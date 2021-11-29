@@ -186,8 +186,9 @@ def warn_bad_prediction(pred, trained_model, houses):
         print("WARNING. Prediction may be inaccurate. Low number of training samples:", n)
 
     mean, std = prices.mean(), prices.std()
-    min_val, max_val = prices.min() * price_scale, prices.max() * price_scale
+    min_val, max_val = prices.min(), prices.max()
     mean_ci_lower, mean_ci_higher = list(pred['mean_ci_lower'])[0] * price_scale, list(pred['mean_ci_upper'])[0] * price_scale
+    print()
     if pred_val >= mean + 2 * std or pred_val <= mean - 2 * std:
         print("WARNING. Prediction may be inaccurate. Prediction lies outside 2 std of mean of prices in region.")
     elif pred_val <= min_val or pred_val >= max_val:
