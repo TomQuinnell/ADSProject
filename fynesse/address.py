@@ -36,7 +36,7 @@ def append_type_onehots_from_df(features, df):
 
 
 def get_param_names(poi_names, added_features=False):
-    param_names = [*poi_names, "lattitude", "longitude", *["OnehotType" + property_type for property_type in property_types]]
+    param_names = [*poi_names, "lattitude", "longitude", "year - 1995", *["OnehotType" + property_type for property_type in property_types]]
     if added_features:
         param_names.append("Nearest")
     return param_names
@@ -47,10 +47,9 @@ def design_matrix(houses, poi_names, added_features=False):
     vectors.append(np.array(houses['lattitude']).reshape(-1, 1))
     vectors.append(np.array(houses['longitude']).reshape(-1, 1))
     vectors.append(np.array([date.year - 1995 for date in list(houses['date_of_transfer'])]).reshape(-1, 1))
-    print(vectors)
     append_type_onehots_from_df(vectors, houses)
     if added_features:
-        print("adding features...")
+        print("Adding Nearest Price feature...")
         vectors.append(nearest_price_feature(houses, list(houses['lattitude']), list(houses['longitude'])).reshape(-1, 1))
     return np.concatenate(vectors, axis=1)
 
@@ -151,3 +150,65 @@ def summarise_model_pred(model, pred, poi_names=assess.get_poi_names(assess.defa
     print(pred.head())
     print(model.summary())
     print(get_param_names(poi_names))
+
+
+def validate_latlon(lat, lon):
+    if 50.10319 <= lat and lat <= 60.15456 and -7.64133 <= lon and lon <= 1.75159:
+        return
+    raise Exception("Latitude or Longitude does not lie in range for UK.")
+
+
+def validate_date(date):
+    if isinstance(date, str) and len(date) == 4 and "1995" <= date and date <= "2021":
+        return
+    else:
+        raise Exception("date is not a string of year 1995-2021")
+
+
+def validate_property_type(property_type):
+    if property_type not in property_types:
+        raise Exception("property type not valid. Should be an element in", address.property_types)
+
+
+def predict_price(latitude, longitude, date, property_type, conn):
+    # Data validation
+    validate_latlon(latitude, longitude)
+    validate_date(date)
+    validate_property_type(property_type)
+
+    # Bounding box around lat and lon
+    region_bbox_size = 0.05  # could have parameter to scale denseness of area?
+    region_bbox = access.get_bounding_box(latitude, longitude, region_bbox_size, region_bbox_size)
+
+    # Get date range, +- n years if still in range
+    date_range = access.get_date_range(date, n=1)
+
+    # For each postcode, for each year, add data
+    access.join_data_within_bbox_times(conn, region_bbox, date_range)
+    houses = access.sql_to_df(conn, "prices_coordinates_data")
+
+    # If no postcode data found, print a warning and randomly guess
+    print("No postcodes found within bounding box. Returning a random guess")
+    return np.random.random() * 400000 + 100000
+
+    # Add POIs
+    assess.get_features_for_houses(houses, region_bbox)
+
+    # Train linear model
+    # if too many samples, don't add nearest as it takes too long
+    added_features = houses.shape[0] < 1250
+    trained_model = train_positive_linear_model(houses, assess.get_poi_names(assess.default_pois),
+                                                added_features=added_features)
+
+    # Get prediction
+    pred = predict_once(latitude, longitude, date, property_type, houses, assess.default_pois, trained_model,
+                                added_features=added_features, sample_norm_pois=False).summary_frame(alpha=0.05)
+    summarise_model_pred(trained_model, pred)
+
+    # Quality verification - warning
+
+    # close SQL connection
+    conn.close()
+
+    # Return prediction - demux mean from pred object
+    return list(pred['mean'])[0] * price_scale
