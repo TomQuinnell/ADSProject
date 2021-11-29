@@ -140,7 +140,7 @@ def train_positive_linear_model(houses, poi_names, added_features=False):
 
 def predict_many(lats, lons, dates, property_type_list, houses, poi_tags, model, sample_norm_pois, bbox_size, added_features):
     features = get_features(lats, lons, dates, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=len(lats), added_features=added_features)
-    return model.get_prediction(features)
+    return model.get_prediction(np.array(features, dtype=float))
 
 
 def predict_once(lat, lon, date, property_type, houses, poi_tags, model, sample_norm_pois=True, bbox_size=0.02, added_features=False):
