@@ -222,6 +222,33 @@ def join_data_for_postcodes_times(conn, postcodes, dates):
     conn.commit()
 
 
+def join_data_within_bbox_time(conn, north, south, east, west, date_of_transfer, truncate=True):
+    cur = conn.cursor()
+    if truncate:
+        truncate_table(conn, "prices_coordinates_data", commit=True)
+    print("Now inserting data from bounding box", [north, south, east, west])
+    cur.execute(f"""
+            INSERT INTO prices_coordinates_data
+                (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,
+                town_city, district, county, country, lattitude, longitude, db_id)
+            SELECT price, date_of_transfer, pp.postcode, property_type, new_build_flag, tenure_type, locality,
+                town_city, district, county, country, lattitude, longitude, pp.db_id
+            FROM
+                (SELECT * FROM pp_data WHERE pp_data.date_of_transfer LIKE '{date_of_transfer}%') pp
+            INNER JOIN
+                (SELECT * FROM postcode_data WHERE {west} <= postcode_data.longitude AND postcode_data.longitude < {east}
+                        AND {south} <= postcode_data.lattitude AND postcode_data.lattitude < {north}) pc
+            ON pp.postcode = pc.postcode \n;""")
+    conn.commit()
+
+
+def join_data_within_bbox_times(conn, bbox, dates):
+    truncate_table(conn, "prices_coordinates_data", commit=True)
+    for date in dates:
+        join_data_within_bbox_time(conn, *bbox, date, truncate=False)
+    conn.commit()
+
+
 def join_data_for_region_time(conn, region, date_of_transfer, truncate=True):
     """
     Select the data for the region with postcode starting with postcode_start,
