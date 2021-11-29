@@ -101,8 +101,8 @@ def get_pois_many(lats, lons, poi_tags, bbox_size):
     return [np.array([feature]).reshape(-1, 1) for feature in features]
 
 
-def get_features(lats, lons, property_type_list, houses, poi_tags, bbox_size, n=1, added_features=False):
-    if not added_features:
+def get_features(lats, lons, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=1, added_features=False):
+    if sample_norm_pois:
         features = sample_normals(houses, assess.get_poi_names(poi_tags), n)
     else:
         features = get_pois_many(lats, lons, poi_tags, bbox_size)
@@ -132,13 +132,13 @@ def train_positive_linear_model(houses, poi_names, added_features=False):
     return m_pos_linear_fitted
 
 
-def predict_many(lats, lons, property_type_list, houses, poi_tags, model, bbox_size, added_features):
-    features = get_features(lats, lons, property_type_list, houses, poi_tags, bbox_size, n=len(lats), added_features=added_features)
+def predict_many(lats, lons, property_type_list, houses, poi_tags, model, sample_norm_pois, bbox_size, added_features):
+    features = get_features(lats, lons, property_type_list, houses, poi_tags, sample_norm_pois, bbox_size, n=len(lats), added_features=added_features)
     return model.get_prediction(features)
 
 
-def predict_once(lat, lon, property_type, houses, poi_tags, model, bbox_size=0.02, added_features=False):
-    return predict_many([lat], [lon], [property_type], houses, poi_tags, model, bbox_size, added_features)
+def predict_once(lat, lon, property_type, houses, poi_tags, model, sample_norm_pois=True, bbox_size=0.02, added_features=False):
+    return predict_many([lat], [lon], [property_type], houses, poi_tags, model, sample_norm_pois, bbox_size, added_features)
 
 
 def summarise_model_pred(model, pred, poi_names=assess.get_poi_names(assess.default_pois)):
