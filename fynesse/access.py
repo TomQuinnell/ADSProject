@@ -226,7 +226,7 @@ def join_data_within_bbox_time(conn, north, south, east, west, date_of_transfer,
     cur = conn.cursor()
     if truncate:
         truncate_table(conn, "prices_coordinates_data", commit=True)
-    print("Now inserting data from bounding box", [north, south, east, west])
+    print("Now inserting data from bounding box", [north, south, east, west], "for year", date_of_transfer)
     cur.execute(f"""
             INSERT INTO prices_coordinates_data
                 (price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality,

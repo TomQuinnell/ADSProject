@@ -113,7 +113,7 @@ def get_features(lats, lons, dates, property_type_list, houses, poi_tags, sample
         features = get_pois_many(lats, lons, poi_tags, bbox_size)
     features.append(np.array(lats).reshape(-1, 1))
     features.append(np.array(lons).reshape(-1, 1))
-    features.append(np.array(dates).reshape(-1, 1))
+    features.append((np.array(dates, dtype=float) - 1995).reshape(-1, 1))
     append_type_onehots(features, n, property_type_list)
     if added_features:
         features.append(np.array(nearest_price_feature(houses, lats, lons)).reshape(-1, 1))
