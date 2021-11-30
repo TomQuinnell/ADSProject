@@ -120,6 +120,12 @@ def plot_house_prices(house_df, by_type=True):
 
 
 def closest_point(point, points):
+    """
+    Get the point closest in a list of points
+    :param point: point to find closest to
+    :param points: list of points to compare to
+    :return: the closest point and the distance to this point (if it exists)
+    """
     min_dist = 100000000
     closest = None
     for p in points:
@@ -131,6 +137,12 @@ def closest_point(point, points):
 
 
 def get_poi_names(tags):
+    """
+    Get names of Points Of Interest from tags (see defaults above)
+    :param tags: Point of Interest tags
+    :param points: list of points to compare to
+    :return: The names of the Points Of Interest, specifying the value separated by a ; if found
+    """
     poi_names = []
     for k in tags.keys():
         if tags[k] == True:
@@ -142,6 +154,13 @@ def get_poi_names(tags):
 
 
 def get_points_of_interest_wthin_dist(pois, radius, point):
+    """
+    Get Points Of Interest within distance of another point
+    :param pois: Points Of Interest dataframe
+    :param radius: distance range
+    :param point: point to measure distance from, a Shapely Point
+    :return: The Points Of Interest withing the Radius of this Point
+    """
     pois['dist_to_point'] = list(map(lambda pt: point.distance(pt), list(pois['geometry'])))
     return pois.loc[pois['dist_to_point'] < radius]
 

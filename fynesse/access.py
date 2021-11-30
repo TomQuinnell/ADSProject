@@ -171,6 +171,12 @@ def upload_postcode_data(conn):
 
 
 def truncate_table(conn, table, commit=False):
+    """
+    Truncate the table
+    :param conn: the Connection object
+    :param table: the Table to truncate
+    :param commit: boolean indicating whether to commit changes upon completion
+    """
     cur = conn.cursor()
     print("Truncating table (clear data while preserving structure)...")
     cur.execute(f"TRUNCATE TABLE {table}")  # clear the data, preserve structure
@@ -187,6 +193,7 @@ def join_data_for_postcode_time(conn, postcode_start, date_of_transfer, truncate
     :param conn: the Connection object
     :param postcode_start: the Postcode Prefix
     :param date_of_transfer: the Prefix for the date of transfer
+    :param truncate: boolean denoting whether to truncate the table at the start
     """
     cur = conn.cursor()
     if truncate:
@@ -207,22 +214,44 @@ def join_data_for_postcode_time(conn, postcode_start, date_of_transfer, truncate
     conn.commit()
 
 
-def join_date_for_postcodes_time(conn, postcodes, date):
+def join_data_for_postcodes_time(conn, postcodes, date):
+    """
+    Join together data for many postcodes for a single time
+    :param conn: the Connection object
+    :param postcodes: the Postcodes to insert data for
+    :param date: the date of transfer
+    """
     for postcode in postcodes:
         print("Inserting data for postcode", postcode)
         join_data_for_postcode_time(conn, postcode, date, truncate=False)
 
 
 def join_data_for_postcodes_times(conn, postcodes, dates):
+    """
+    Join together data for many postcodes for many times
+    :param conn: the Connection object
+    :param postcodes: the Postcodes to insert data for
+    :param dates: the dates of transfer
+    """
     truncate_table(conn, "prices_coordinates_data", commit=True)
     for date in dates:
         print("Inserting data for date", date)
-        join_date_for_postcodes_time(conn, postcodes, date)
+        join_data_for_postcodes_time(conn, postcodes, date)
 
     conn.commit()
 
 
 def join_data_within_bbox_time(conn, north, south, east, west, date_of_transfer, truncate=True):
+    """
+    Join together data within a bounding box for a single time
+    :param conn: the Connection object
+    :param north: North of the bounding box
+    :param south: South of the bounding box
+    :param east: East of the bounding box
+    :param west: West of the bounding box
+    :param date_of_transfer: the date of transfer
+    :param truncate: boolean indicating whether to truncate at the start
+    """
     cur = conn.cursor()
     if truncate:
         truncate_table(conn, "prices_coordinates_data", commit=True)
@@ -243,6 +272,15 @@ def join_data_within_bbox_time(conn, north, south, east, west, date_of_transfer,
 
 
 def join_data_within_bbox_times(conn, bbox, dates):
+    """
+    Join together data within a bounding box for many times
+    :param conn: the Connection object
+    :param bbox: the bounding box
+    :param south: South of the bounding box
+    :param east: East of the bounding box
+    :param west: West of the bounding box
+    :param dates: the dates of transfer
+    """
     truncate_table(conn, "prices_coordinates_data", commit=True)
     for date in dates:
         join_data_within_bbox_time(conn, *bbox, date, truncate=False)
@@ -389,6 +427,16 @@ def get_gdf_data_for(place_name, bb_width=0.02, bb_height=0.02):
 
 
 def select_postcodes_within_bbox(conn, north, south, east, west, limit=6):
+    """
+    Select postcodes within a bounding box, by selecting data from postcode_data table
+    :param conn: the Connection object
+    :param north: North of the bounding box
+    :param south: South of the bounding box
+    :param east: East of the bounding box
+    :param west: West of the bounding box
+    :param limit: the max number of items to return
+    :return: list of postcodes with house sale in bounding box
+    """
     print("Getting postcodes within the bounding box", [north, south, east, west])
     cur = conn.cursor()
     cur.execute(f"""SELECT DISTINCT postcode_district FROM postcode_data
@@ -402,6 +450,12 @@ def select_postcodes_within_bbox(conn, north, south, east, west, limit=6):
 
 
 def get_date_range(date, n=1):
+    """
+    Get the range of dates in date +- n
+    :param date: the middle date
+    :param n: date range either side
+    :return: list of years [date - n, ..., date, date + n], clipping for the data range 1995-2021
+    """
     # Get date range, +- n years if still in range
     date = int(date)
     date_range = [date]
