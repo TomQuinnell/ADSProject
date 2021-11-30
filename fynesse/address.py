@@ -218,6 +218,29 @@ def predict_price(latitude, longitude, date, property_type, conn):
 
     # If no postcode data found, print a warning and randomly guess
     if houses.shape[0] == 0:
+        # Expand bounding box and date range
+        new_bounding_box_size = 0.2
+        new_bounding_box = access.get_bounding_box(latitude, longitude, new_bounding_box_size, new_bounding_box_size)
+        new_date_range_size = 2
+        access.join_data_within_bbox_times(conn, new_bounding_box, access.get_date_range(date, new_date_range_size))
+        houses = access.sql_to_df(conn, "prices_coordinates_data")
+
+        # Try to choose a random sample from the property_type
+        houses_with_type = houses.loc[houses['property_type'] == property_type]
+        if houses_with_type.shape[0] != 0:
+            print("No samples found with initial bounding box."
+                  "Returning a guess from same property types in a larger bounding box", new_bounding_box)
+            prices = np.array(houses_with_type['price'])
+            return np.random.choice(prices)
+
+        # Try to choose a random sample if none of the property_type
+        if houses.shape[0] != 0:
+            print("No samples found within initial bounding box."
+                  "Returning a guess from all properties in a larger bounding box of", new_bounding_box)
+            prices = np.array(houses_with_type['price'])
+            return np.random.choice(prices)
+
+        # Randomly guess between 100k and 500k
         print("No samples found within bounding box. Returning a random guess")
         return np.random.random() * 400000 + 100000
 
