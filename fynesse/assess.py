@@ -166,6 +166,13 @@ def get_points_of_interest_wthin_dist(pois, radius, point):
 
 
 def get_features_for_houses(houses, bbox, feature_radius=0.01):
+    """
+    Add feature columns to Data Frame within bounding box in radius
+    :param houses: data frame with house data
+    :param bbox: bounding box of features
+    :param feature_radius: radius of features to copy existing lookup entry
+    :return: The Points Of Interest added to the Data Frame
+    """
     # get features for each house, storing in lookup table of bboxes
     poi_names = get_poi_names(default_pois)
     poi_lookup = {}
