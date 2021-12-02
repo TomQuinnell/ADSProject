@@ -50,11 +50,11 @@ In this section, there is:
 
  - Build design matrices (for training) and feature vectors (for prediction)
    - Open Street Map Points of Interest features. Defaults chosen intuitively to those which would effect house prices (e.g. a Railway nearby causes noise, intuitively reducing the price). Code is extendable for different Points of Interest for future experiments.
-     - Originally sampled from Normal distribution of historical data of Points Of Interest for Predictions. Changed to get the Points around the property instead. Although this adds complexity and time to predictions, this makes the features more realistic. I kept this code to insert into Notebook to maintain narrative - future developers may try this method, this will show them why I believe not to.
+     - Originally sampled from Normal distribution of historical data of Points Of Interest for Predictions. Changed to get the Points around the property instead. Although this adds complexity and time to predictions, this makes the features more realistic. I kept this code to insert into Notebook to maintain narrative - future developers may use this method, but the narrative will show why I did not.
    - House sale data (Latitude, Longitude, Date, Type). Model can use historical data to (begin to) learn the landscape and hopefully extrapolate this to the new sale prediction. Of course this is unreliable - past performance may differ, landscape may be too complex for linear model, extra features could move model away from better features etc.
-   - Nearest sale. Intuitively influences model towards prices in region. Again, past performance may not be representative.
+   - Nearest sale feature vector. Intuitively influences model towards prices in region. Again, past performance may not be representative.
  - Train linear models
-   - Generate data using the rest of the zoo of code.
+   - Generate data using the rest of the Fynesse framework.
    - Create a model and train on the data
      - Code can be easily reused by changing model type. It could be beneficial in the future to create a function with model type as input to allow future developers to easily experiment.
  - Overall, there is a flaw in the model. There is no description of the house itself apart from the type. E.g. a detached house could be a luxury 10000 sq ft mansion, or a tiny shed. In the future it could be beneficial to join with a house dataset (e.g. planning permission layouts, rental websites) to extract features about the house itself.
